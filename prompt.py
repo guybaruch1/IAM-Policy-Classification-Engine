@@ -1,36 +1,57 @@
-# prompt engineering
+"""Prompt construction utilities for policy classification.
 
-def build_prompt(policy_json: str) -> str:
-    return f"""
-You are a cloud security analyst specializing in IAM policy risk assessment.
+The prompt enforces a JSON-only output with strict labels and a concise reason.
+"""
+from __future__ import annotations
 
-Your task is to analyze the following IAM policy and classify it strictly as either "Weak" or "Strong".
+import json
 
-Classification guidelines:
 
-A policy should be classified as "Weak" if one or more of the following apply:
-- Uses wildcard actions (e.g., "*", "s3:*") without strong restrictions
-- Uses wildcard resources ("*") without scoping
-- Grants excessive permissions beyond least privilege
-- Lacks security conditions such as Multi-Factor Authentication (MFA)
-- Allows broad administrative actions without constraints
+def build_prompt(policy: dict) -> str:
+  policy_text = json.dumps(policy, indent=2, ensure_ascii=False)
 
-A policy should be classified as "Strong" if:
-- Permissions follow the principle of least privilege
-- Actions are specific and narrowly scoped
-- Resources are explicitly defined
-- Strong security conditions are enforced (e.g., MFA, IP restrictions)
-- Access is limited to well-defined use cases
+  # Few-shot examples to guide deterministic outputs and JSON-only responses.
+  examples = [
+    {
+      "policy": {
+        "Statement": [{"Effect": "Allow", "Action": "s3:*", "Resource": "*"}]
+      },
+      "classification": "Weak",
+      "reason": "Allows all S3 actions on all resources (wildcard action+resource), violates least privilege."
+    },
+    {
+      "policy": {
+        "Statement": [{"Effect": "Allow", "Action": ["s3:GetObject"], "Resource": ["arn:aws:s3:::my-bucket/*"]}]
+      },
+      "classification": "Strong",
+      "reason": "Restricts actions to specific read operations and scopes resource to a single bucket."
+    },
+  ]
 
-You must return a valid JSON object with the following structure and nothing else:
+  example_text = ""
+  for ex in examples:
+    example_text += f"Policy:\n{json.dumps(ex['policy'])}\n-> {json.dumps({'classification': ex['classification'], 'reason': ex['reason']})}\n\n"
 
-{{
-  "classification": "Weak" | "Strong",
-  "reason": "<concise security-focused explanation>"
-}}
+  prompt = f"""
+You are a cloud security analyst. Analyze the IAM policy and classify it STRICTLY as either "Weak" or "Strong".
 
-Do not include markdown, code blocks, or additional commentary.
+Rules:
+- Only return a single JSON object and nothing else.
+- The object must match the schema: {{"classification": "Weak"|"Strong", "reason": "<concise explanation>"}}
+- `classification` must be exactly "Weak" or "Strong" (case-sensitive).
+- `reason` must be a short, security-focused justification (one sentence preferred).
+- Use deterministic settings (temperature=0) and avoid speculation.
 
-IAM Policy to analyze:
-{policy_json}
+Examples (for style):
+{example_text}
+
+NOW ANALYZE THE FOLLOWING POLICY and return JSON only.
+
+POLICY:
+{policy_text}
 """.strip()
+
+  return prompt
+
+
+__all__ = ["build_prompt"]
