@@ -5,6 +5,8 @@ ENV/
 
 # Secrets and Config
 .env
+outputs/
+NOTES.md
 
 # Python bytecode
 __pycache__/
