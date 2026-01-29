@@ -1,0 +1,20 @@
+# Python environment
+venv/
+env/
+ENV/
+
+# Secrets and Config
+.env
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDEs
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
