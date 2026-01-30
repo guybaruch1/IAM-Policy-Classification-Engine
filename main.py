@@ -55,16 +55,21 @@ def main():
         logging.error(f"Classification failed: {e}")
         sys.exit(1)
 
+    final_output = {
+    "policy": policy,
+    "classification": result.classification,
+    "reason": result.reason,
+    }
+
     # Print result
-    print(result.model_dump_json(indent=2))
+    print(json.dumps(final_output, indent=2))
 
     # # Save output
     # out_dir = Path("outputs")
     # out_dir.mkdir(exist_ok=True)
     # out_path = out_dir / "result.json"
     # with open(out_path, "w", encoding="utf-8") as f:
-    #     f.write(result.model_dump_json(indent=2))
-
+    #     json.dump(final_output, f, indent=2)
 
     # print(f"\nSaved to: {out_path}")
 
