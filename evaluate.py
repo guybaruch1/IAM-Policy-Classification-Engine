@@ -16,6 +16,8 @@ from logging_utils import setup_logging
 from llm_client import LLMClient
 from classifier import PolicyClassifier
 
+# logging.getLogger("httpx").setLevel(logging.WARNING)
+
 
 DATASET_PATH = Path("policies/labeled_policies.json")
 OUTPUT_PATH = Path("outputs/evaluation_results.json")
